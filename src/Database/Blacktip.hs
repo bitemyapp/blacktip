@@ -1,5 +1,6 @@
 module Database.Blacktip () where
 
+import qualified Control.Concurrent        as CC
 import qualified Control.Concurrent.MVar   as MV
 import qualified Control.Exception         as E
 import qualified Data.Binary.Put           as BinP
@@ -12,8 +13,9 @@ import qualified Filesystem                as FS
 import qualified Filesystem.Path.CurrentOS as FPC
 import qualified Network.Info              as NI
 import qualified Safe
-import Data.Word
+import Control.Monad (forever)
 import Database.Blacktip.Types
+import Data.Word
 
 -- There are only supposed to be one of these
 -- babies running per node (MAC address)!
@@ -39,7 +41,12 @@ readTimestamp path = do
      Just num -> return $ Right num
      where possibleParse = (Safe.readMay . B.unpack) val
 
-writeTimestamp s path = undefined
+writeTimestamp :: MV.MVar ServerState -> FPC.FilePath -> IO ()
+writeTimestamp s path = forever $ do
+  ss <- MV.takeMVar s
+  FS.writeFile path (B.pack (show (ssTime ss)))
+  -- sleep for 1 second
+  CC.threadDelay 1000000
 
 bumpItYo s ts = undefined
 
@@ -71,7 +78,13 @@ putify ms (NI.MAC a b c d e f) sq = do
   -- 16 bits of counter (sequence)
   BinP.putWord16be counter
 
+-- iface <- getInterfaceByName "wlan0"
+-- let muhMac = NI.mac $ fromJust iface
+-- ms <- getUnixMillis
 -- BinP.runPut (putify ms muhMac 0)
+-- import qualified Data.ByteString.Lazy.Char8     as BL
+-- BL.readInteger
+
 -- writeTimestamp config =
 
 -- *Data.Blacktip DL> DL.toBase62 1000000000000000000000000000

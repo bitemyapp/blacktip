@@ -38,8 +38,8 @@ defaultConfig =
                       
 
 data ServerState =
-  ServerState { time     :: Milliseconds
-              , sequence :: DI.Int16 }
+  ServerState { ssTime     :: Milliseconds
+              , ssSequence :: DI.Int16 }
   deriving Show
 
 -- {64 bit timestamp, 48 bit id (MAC address), 16 bit sequence}
