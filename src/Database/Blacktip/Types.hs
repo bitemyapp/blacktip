@@ -1,8 +1,9 @@
 module Database.Blacktip.Types
        ( Config(..)
        , Interface(..)
-       , ParseError(..)
        , ServerState(..)
+       , ArrowOfTimeError(..)
+       , ParseError(..)
        , InterfaceName
        , Milliseconds
        , UniqueId
@@ -47,3 +48,6 @@ type UniqueId = Integer
 
 -- if the data in the file doesn't parse
 data ParseError = ParseError deriving Show
+
+-- If our current timestamp is younger than the one in our state
+data ArrowOfTimeError = ArrowOfTimeError deriving Show

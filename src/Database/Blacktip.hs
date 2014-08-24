@@ -48,7 +48,13 @@ writeTimestamp s path = forever $ do
   -- sleep for 1 second
   CC.threadDelay 1000000
 
-bumpItYo s ts = undefined
+bumpItYo :: Milliseconds -> ServerState -> Either ArrowOfTimeError ServerState
+bumpItYo ts s
+  | ts == stateTime = Right $ s { ssSequence = (+1) stateSeq }
+  | ts >  stateTime = Right $ s { ssSequence = 0 }
+  | otherwise       = Left ArrowOfTimeError
+  where stateTime = ssTime s
+        stateSeq  = ssSequence s
 
 -- readFile try $ FS.readFile (FPC.decodeString "lol") :: IO (Either IOException ByteString)
 -- writeFile config = FPC.writeFile (timestampPath config)
