@@ -1,0 +1,10 @@
+cabal.sandbox.config
+.cabal-sandbox/
+dist/
+.project
+.dist-buildwrapper/
+.DS_Store
+*.hi
+*.o
+bloodhound-*-docs/
+bloodhound-*-docs.tar.gz
