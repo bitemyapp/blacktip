@@ -112,7 +112,7 @@ binnify ms (NI.MAC a b c d e f) sq = withSq
         withMacD = shift (withMacC      .|. toInteger d)  32
         withMacE = shift (withMacD      .|. toInteger e)  24
         withMacF = shift (withMacE      .|. toInteger f)  16
-        withSq   = withMacF      .|. toInteger sq
+        withSq   = withMacF             .|. toInteger sq
 
 putify :: Milliseconds -> NI.MAC -> DI.Int16 -> BinP.Put
 putify ms (NI.MAC a b c d e f) sq = do
