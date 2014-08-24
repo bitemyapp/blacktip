@@ -4,7 +4,6 @@ import qualified Control.Concurrent        as CC
 import qualified Control.Concurrent.MVar   as MV
 import qualified Control.Exception         as E
 import qualified Data.Binary.Put           as BinP
-import qualified Data.Bits                 as Bits
 import qualified Data.ByteString.Char8     as B
 import qualified Data.Int                  as DI
 import qualified Data.Locator              as DL
@@ -13,9 +12,10 @@ import qualified Filesystem                as FS
 import qualified Filesystem.Path.CurrentOS as FPC
 import qualified Network.Info              as NI
 import qualified Safe
-import Control.Monad (forever)
-import Database.Blacktip.Types
+import Control.Monad (forever, when)
+import Data.Bits
 import Data.Word
+import Database.Blacktip.Types
 
 -- There are only supposed to be one of these
 -- babies running per node (MAC address)!
@@ -24,6 +24,11 @@ getInterfaceByName n = fmap (Safe.headMay
                              . filter ((n ==)
                              . NI.name))
                        NI.getNetworkInterfaces
+
+getMac :: Interface -> IO (Maybe NI.MAC)
+getMac iface = case iface of
+  NIInterface iface -> return $ Just (NI.mac iface)
+  IName       name  -> (fmap . fmap) NI.mac (getInterfaceByName name)
 
 getUnixMillis :: IO Milliseconds
 getUnixMillis = fmap (round . (*1000)) PSX.getPOSIXTime
@@ -41,32 +46,73 @@ readTimestamp path = do
      Just num -> return $ Right num
      where possibleParse = (Safe.readMay . B.unpack) val
 
-writeTimestamp :: MV.MVar ServerState -> FPC.FilePath -> IO ()
-writeTimestamp s path = forever $ do
-  ss <- MV.takeMVar s
-  FS.writeFile path (B.pack (show (ssTime ss)))
-  -- sleep for 1 second
-  CC.threadDelay 1000000
+writeTimestamp :: MV.MVar ServerState -> FPC.FilePath -> IO CC.ThreadId
+writeTimestamp s path = do
+  putStrLn "writer started"
+  CC.forkIO go
+  where go = forever $ do
+          ss <- MV.takeMVar s
+          FS.writeFile path (B.pack (show (ssTime ss)))
+          -- sleep for 1 second
+          CC.threadDelay 1000000
 
-bumpItYo :: Milliseconds -> ServerState -> Either ArrowOfTimeError ServerState
+arrowOfTimeError :: (Show a, Show b) => a -> b -> c
+arrowOfTimeError ts stateTime =
+  error ("ERROR ARROW OF TIME BACKWARDS - Had timestamp: "
+         ++ show ts
+         ++ " and state time: "
+         ++ show stateTime)
+
+bumpItYo :: Milliseconds -> ServerState -> ServerState
 bumpItYo ts s
-  | ts == stateTime = Right $ s { ssSequence = (+1) stateSeq }
-  | ts >  stateTime = Right $ s { ssSequence = 0 }
-  | otherwise       = Left ArrowOfTimeError
+  | ts == stateTime = s { ssSequence = (+1) stateSeq }
+  | ts >  stateTime = s { ssSequence = 0 }
+  | otherwise       = (arrowOfTimeError ts stateTime)
   where stateTime = ssTime s
         stateSeq  = ssSequence s
 
 -- readFile try $ FS.readFile (FPC.decodeString "lol") :: IO (Either IOException ByteString)
 -- writeFile config = FPC.writeFile (timestampPath config)
 
-generateUniqueId :: Config -> UniqueId
-generateUniqueId = blah
-  where blah = undefined
+generateUniqueId :: Config -> IO (Either NoInterfaceError UniqueId)
+generateUniqueId config = do
+  ms <- getUnixMillis
+  ss <- serverState
+  empty <- MV.isEmptyMVar ss
+  _ <- when empty (initWriter (timestampPath config))
+  s <- MV.takeMVar ss
+  let seq = ssSequence $ bumpItYo ms s
+  return $ Right 0
+  where mac = (getMac . interface) config
 
-bitRange n lo hi = reverse (map (Bits.testBit n) [lo..hi])
--- bits n = bitRange n 0 (Bits.bitSize n - 1)
+initWriter :: FPC.FilePath -> IO ()
+initWriter path = do
+  ms <- getUnixMillis
+  st <- readTimestamp path
+  case st of
+    Left ParseError -> error ("Path for timestamp file: "
+                              ++ show path
+                              ++ " could not be parsed as a timestamp.")
+    Right stateTime -> do
+      _ <- when ((toInteger ms) < stateTime) (arrowOfTimeError ms stateTime)
+      ss <- serverState
+      _ <- writeTimestamp ss path 
+      return ()
+
+bitRange n lo hi = reverse (map (testBit n) [lo..hi])
+-- bits n = bitRange n 0 (bitSize n - 1)
 showBits n lo hi = map (\b -> if b then '1' else '0') (bitRange n lo hi)
 -- showBits (shift (toInteger ms) 64) 0 128
+
+binnify ms (NI.MAC a b c d e f) sq = withSq
+  where withTimestamp = shift (toInteger ms) 64
+        withMacA = shift (withTimestamp .|. toInteger a)  56
+        withMacB = shift (withMacA      .|. toInteger b)  48
+        withMacC = shift (withMacB      .|. toInteger c)  40
+        withMacD = shift (withMacC      .|. toInteger d)  32
+        withMacE = shift (withMacD      .|. toInteger e)  24
+        withMacF = shift (withMacE      .|. toInteger f)  16
+        withSq   = withMacF      .|. toInteger sq
 
 putify :: Milliseconds -> NI.MAC -> DI.Int16 -> BinP.Put
 putify ms (NI.MAC a b c d e f) sq = do

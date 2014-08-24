@@ -3,6 +3,7 @@ module Database.Blacktip.Types
        , Interface(..)
        , ServerState(..)
        , ArrowOfTimeError(..)
+       , NoInterfaceError(..)
        , ParseError(..)
        , InterfaceName
        , Milliseconds
@@ -33,7 +34,7 @@ data Config =
 defaultConfig :: Config
 defaultConfig =
   Config { interface = IName "eth0"
-         , timestampPath = FPC.decodeString "/tmp/blacktip-timestamp-dets"
+         , timestampPath = FPC.decodeString "/tmp/blacktip-timestamp"
            -- 720 hours.
          , allowableDowntime = 2592000000 }
                       
@@ -51,3 +52,7 @@ data ParseError = ParseError deriving Show
 
 -- If our current timestamp is younger than the one in our state
 data ArrowOfTimeError = ArrowOfTimeError deriving Show
+
+-- We couldn't find an interface by that name, did you change it
+-- from the default IName "eth0" ?
+data NoInterfaceError = NoInterfaceError deriving Show
