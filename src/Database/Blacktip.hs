@@ -51,7 +51,7 @@ writeTimestamp s path = do
   putStrLn "writer started"
   CC.forkIO go
   where go = forever $ do
-          ss <- MV.takeMVar s
+          ss <- MV.readMVar s
           FS.writeFile path (B.pack (show (ssTime ss)))
           -- sleep for 1 second
           CC.threadDelay 1000000
@@ -63,11 +63,19 @@ arrowOfTimeError ts stateTime =
          ++ " and state time: "
          ++ show stateTime)
 
+-- bumpItYo :: Monad m => Milliseconds -> ServerState -> m (ServerState, ServerState)
+-- bumpItYo ts s
+--   | ts == stateTime = return (s, s { ssSequence = (+1) stateSeq })
+--   | ts >  stateTime = return (s, s { ssSequence = 0 })
+--   | otherwise       = return (s, arrowOfTimeError ts stateTime)
+--   where stateTime = ssTime s
+--         stateSeq  = ssSequence s
+
 bumpItYo :: Milliseconds -> ServerState -> ServerState
 bumpItYo ts s
   | ts == stateTime = s { ssSequence = (+1) stateSeq }
   | ts >  stateTime = s { ssSequence = 0 }
-  | otherwise       = (arrowOfTimeError ts stateTime)
+  | otherwise       = arrowOfTimeError ts stateTime
   where stateTime = ssTime s
         stateSeq  = ssSequence s
 
@@ -80,30 +88,45 @@ generateUniqueId config = do
   ss <- serverState
   empty <- MV.isEmptyMVar ss
   _ <- when empty (initWriter (timestampPath config))
-  s <- MV.takeMVar ss
-  let seq = ssSequence $ bumpItYo ms s
-  return $ Right 0
-  where mac = (getMac . interface) config
+  putStrLn "pre take in gUI"
+  -- newState <- MV.modifyMVar ss (bumpItYo ms)
+  stillEmpty <- MV.isEmptyMVar ss
+  putStrLn ("still empty? " ++ show stillEmpty)
+  mState <- MV.takeMVar ss
+  putStrLn "post modify in gUI"
+  let newState = bumpItYo ms mState
+  _ <- MV.putMVar ss newState
+  putStrLn "post modify in gUI"
+  let sSeq = ssSequence $ newState
+  mMac <- (getMac . interface) config
+  case mMac of
+   Nothing  -> return $ Left NoInterfaceError
+   Just mac -> return $ Right (binnify ms mac sSeq)
 
 initWriter :: FPC.FilePath -> IO ()
 initWriter path = do
   ms <- getUnixMillis
   st <- readTimestamp path
+  putStrLn "read timestamp from path"
   case st of
     Left ParseError -> error ("Path for timestamp file: "
                               ++ show path
                               ++ " could not be parsed as a timestamp.")
     Right stateTime -> do
-      _ <- when ((toInteger ms) < stateTime) (arrowOfTimeError ms stateTime)
+      _  <- when (toInteger ms < stateTime) (arrowOfTimeError ms stateTime)
       ss <- serverState
-      _ <- writeTimestamp ss path 
+      _  <- MV.putMVar ss (ServerState ms 0)
+      putStrLn "post putMVar initWriter"
+      _  <- writeTimestamp ss path
       return ()
 
+bitRange :: Bits a => a -> Int -> Int -> [Bool]
 bitRange n lo hi = reverse (map (testBit n) [lo..hi])
--- bits n = bitRange n 0 (bitSize n - 1)
+showBits :: Bits a => a -> Int -> Int -> [Char]
 showBits n lo hi = map (\b -> if b then '1' else '0') (bitRange n lo hi)
 -- showBits (shift (toInteger ms) 64) 0 128
 
+binnify :: (Integral a, Integral b) => a -> NI.MAC -> b -> Integer
 binnify ms (NI.MAC a b c d e f) sq = withSq
   where withTimestamp = shift (toInteger ms) 64
         withMacA = shift (withTimestamp .|. toInteger a)  56
