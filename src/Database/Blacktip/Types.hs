@@ -7,6 +7,7 @@ module Database.Blacktip.Types
        , ParseError(..)
        , InterfaceName
        , Milliseconds
+       , Sequence
        , UniqueId
        , defaultConfig
          )
@@ -24,6 +25,7 @@ data Interface = NIInterface NI.NetworkInterface
                  deriving Show
 
 type Milliseconds = Int
+type Sequence     = DI.Int16
 
 data Config =
   Config { interface         :: Interface
@@ -41,7 +43,7 @@ defaultConfig =
 
 data ServerState =
   ServerState { ssTime     :: Milliseconds
-              , ssSequence :: DI.Int16 }
+              , ssSequence :: Sequence }
   deriving Show
 
 -- {64 bit timestamp, 48 bit id (MAC address), 16 bit sequence}

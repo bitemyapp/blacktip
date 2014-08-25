@@ -16,6 +16,7 @@ import Control.Monad (forever, when)
 import Data.Bits
 import Data.Word
 import Database.Blacktip.Types
+import System.IO.Unsafe (unsafePerformIO)
 
 -- There are only supposed to be one of these
 -- babies running per node (MAC address)!
@@ -33,22 +34,20 @@ getMac iface = case iface of
 getUnixMillis :: IO Milliseconds
 getUnixMillis = fmap (round . (*1000)) PSX.getPOSIXTime
 
-serverState :: IO (MV.MVar ServerState)
-serverState = MV.newEmptyMVar
+-- We don't want multiple of these running around via inlining
+{-# NOINLINE serverState #-}
+serverState :: MV.MVar ServerState
+-- unsafePerformIO so it doesn't create an
+-- emptyMVar when I bind against serverState
+serverState = unsafePerformIO $ MV.newEmptyMVar
 
-readTimestamp :: FPC.FilePath -> IO (Either ParseError Integer)
+readTimestamp :: FPC.FilePath -> IO Int
 readTimestamp path = do
-  result <- E.try $ FS.readFile path :: IO (Either IOError B.ByteString)
-  case result of
-   Left  _   -> return $ Right 0
-   Right val -> case possibleParse of
-     Nothing  -> return $ Left ParseError
-     Just num -> return $ Right num
-     where possibleParse = (Safe.readMay . B.unpack) val
+  result <- FS.readFile path
+  return $ (read . B.unpack) result
 
 writeTimestamp :: MV.MVar ServerState -> FPC.FilePath -> IO CC.ThreadId
 writeTimestamp s path = do
-  putStrLn "writer started"
   CC.forkIO go
   where go = forever $ do
           ss <- MV.readMVar s
@@ -84,58 +83,45 @@ bumpItYo ts s
 
 generateUniqueId :: Config -> IO (Either NoInterfaceError UniqueId)
 generateUniqueId config = do
-  ms <- getUnixMillis
-  ss <- serverState
-  empty <- MV.isEmptyMVar ss
+  -- millis <- getUnixMillis
+  millis <- readTimestamp path
+  empty <- MV.isEmptyMVar serverState
   _ <- when empty (initWriter (timestampPath config))
-  putStrLn "pre take in gUI"
   -- newState <- MV.modifyMVar ss (bumpItYo ms)
-  stillEmpty <- MV.isEmptyMVar ss
-  putStrLn ("still empty? " ++ show stillEmpty)
-  mState <- MV.takeMVar ss
-  putStrLn "post modify in gUI"
-  let newState = bumpItYo ms mState
-  _ <- MV.putMVar ss newState
-  putStrLn "post modify in gUI"
+  mState <- MV.takeMVar serverState
+  let newState = bumpItYo millis mState
+  _ <- MV.putMVar serverState newState
   let sSeq = ssSequence $ newState
   mMac <- (getMac . interface) config
   case mMac of
    Nothing  -> return $ Left NoInterfaceError
-   Just mac -> return $ Right (binnify ms mac sSeq)
+   Just mac -> return $ Right (binnify millis mac sSeq)
+  where path = timestampPath config
 
 initWriter :: FPC.FilePath -> IO ()
 initWriter path = do
   ms <- getUnixMillis
-  st <- readTimestamp path
-  putStrLn "read timestamp from path"
-  case st of
-    Left ParseError -> error ("Path for timestamp file: "
-                              ++ show path
-                              ++ " could not be parsed as a timestamp.")
-    Right stateTime -> do
-      _  <- when (toInteger ms < stateTime) (arrowOfTimeError ms stateTime)
-      ss <- serverState
-      _  <- MV.putMVar ss (ServerState ms 0)
-      putStrLn "post putMVar initWriter"
-      _  <- writeTimestamp ss path
-      return ()
+  stateTime <- readTimestamp path
+  _  <- when (ms < stateTime) (arrowOfTimeError ms stateTime)
+  _  <- MV.putMVar serverState (ServerState ms 0)
+  _  <- writeTimestamp serverState path
+  return ()
 
 bitRange :: Bits a => a -> Int -> Int -> [Bool]
 bitRange n lo hi = reverse (map (testBit n) [lo..hi])
 showBits :: Bits a => a -> Int -> Int -> [Char]
 showBits n lo hi = map (\b -> if b then '1' else '0') (bitRange n lo hi)
--- showBits (shift (toInteger ms) 64) 0 128
 
-binnify :: (Integral a, Integral b) => a -> NI.MAC -> b -> Integer
+binnify :: Milliseconds -> NI.MAC -> Sequence -> Integer
 binnify ms (NI.MAC a b c d e f) sq = withSq
   where withTimestamp = shift (toInteger ms) 64
-        withMacA = shift (withTimestamp .|. toInteger a)  56
-        withMacB = shift (withMacA      .|. toInteger b)  48
-        withMacC = shift (withMacB      .|. toInteger c)  40
-        withMacD = shift (withMacC      .|. toInteger d)  32
-        withMacE = shift (withMacD      .|. toInteger e)  24
-        withMacF = shift (withMacE      .|. toInteger f)  16
-        withSq   = withMacF             .|. toInteger sq
+        withMacA = shift (toInteger a) 56 .|. withTimestamp
+        withMacB = shift (toInteger b) 48 .|. withMacA
+        withMacC = shift (toInteger c) 40 .|. withMacB
+        withMacD = shift (toInteger d) 32 .|. withMacC
+        withMacE = shift (toInteger e) 24 .|. withMacD
+        withMacF = shift (toInteger f) 16 .|. withMacE
+        withSq   = withMacF               .|. toInteger sq
 
 putify :: Milliseconds -> NI.MAC -> DI.Int16 -> BinP.Put
 putify ms (NI.MAC a b c d e f) sq = do
