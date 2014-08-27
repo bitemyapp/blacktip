@@ -14,7 +14,6 @@ module Database.Blacktip.Types
        where
 
 import qualified Data.Int                  as DI
-import qualified Data.Word                 as W
 import qualified Filesystem.Path.CurrentOS as FPC
 import qualified Network.Info              as NI
 
@@ -57,4 +56,4 @@ data ArrowOfTimeError = ArrowOfTimeError deriving Show
 
 -- We couldn't find an interface by that name, did you change it
 -- from the default IName "eth0" ?
-data NoInterfaceError = NoInterfaceError deriving Show
+data NoInterfaceError = NoInterfaceError deriving (Eq, Ord, Show)

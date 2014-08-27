@@ -1,5 +1,6 @@
 module Database.Blacktip
-       ( generateUniqueId
+       ( module Database.Blacktip.Types
+       , generateUniqueId
        , getInterfaceByName
        , toBase62
          ) where
@@ -110,3 +111,6 @@ binnify ms (NI.MAC a b c d e f) sq = withSq
         withMacE = shift (toInteger e) 24 .|. withMacD
         withMacF = shift (toInteger f) 16 .|. withMacE
         withSq   = withMacF               .|. toInteger sq
+
+bitRange :: Bits a => a -> Int -> Int -> [Bool]
+bitRange n lo hi = reverse $ map (testBit n) [lo..hi]
