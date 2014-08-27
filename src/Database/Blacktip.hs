@@ -1,7 +1,9 @@
 module Database.Blacktip
        ( module Database.Blacktip.Types
        , generateUniqueId
+       , generateUniqueId'
        , getInterfaceByName
+       , integerToRecord
        , toBase62
          ) where
 
@@ -16,6 +18,8 @@ import qualified Network.Info              as NI
 import qualified Safe
 import Control.Monad (forever, when)
 import Data.Bits
+import Data.Bits.Bitwise (fromListBE)
+import Data.List.Split (chunksOf)
 import Database.Blacktip.Types
 import System.IO.Unsafe (unsafePerformIO)
 
@@ -77,8 +81,9 @@ bumpItYo ts s
 -- readFile try $ FS.readFile (FPC.decodeString "lol") :: IO (Either IOException ByteString)
 -- writeFile config = FPC.writeFile (timestampPath config)
 
-generateUniqueId :: Config -> IO (Either NoInterfaceError UniqueId)
-generateUniqueId config = do
+generateUniqueId' :: Config -> IO (Either NoInterfaceError
+                                  (UniqueId, IdentityRecord))
+generateUniqueId' config = do
   millis <- getUnixMillis
   empty <- MV.isEmptyMVar serverState
   _ <- when empty (initWriter (timestampPath config))
@@ -90,7 +95,12 @@ generateUniqueId config = do
   mMac <- (getMac . interface) config
   case mMac of
    Nothing  -> return $ Left NoInterfaceError
-   Just mac -> return $ Right (binnify millis mac sSeq)
+   Just mac -> return $ Right ((binnify millis mac sSeq), IdentityRecord millis mac sSeq)
+
+generateUniqueId :: Config -> IO (Either NoInterfaceError UniqueId)
+generateUniqueId config = do
+  uid <- generateUniqueId' config
+  return $ fmap fst uid
 
 initWriter :: FPC.FilePath -> IO ()
 initWriter path = do
@@ -112,5 +122,23 @@ binnify ms (NI.MAC a b c d e f) sq = withSq
         withMacF = shift (toInteger f) 16 .|. withMacE
         withSq   = withMacF               .|. toInteger sq
 
+-- works with Integer since I am providing range, big-endian
 bitRange :: Bits a => a -> Int -> Int -> [Bool]
 bitRange n lo hi = reverse $ map (testBit n) [lo..hi]
+
+integerToRecord :: Integer -> IdentityRecord
+integerToRecord n = IdentityRecord milliseconds mac recSequence
+                    -- extract 128 bits.
+  where extractedBits = bitRange n 0 127
+        milliBits     = take 64 extractedBits
+        macBits       = chunksOf 8 $ take 48 $ drop 64 extractedBits
+        sequenceBits  = take 16 $ drop 112 extractedBits
+        milliseconds  = fromListBE milliBits :: Milliseconds
+        a             = fromListBE (macBits !! 0)
+        b             = fromListBE (macBits !! 1)
+        c             = fromListBE (macBits !! 2)
+        d             = fromListBE (macBits !! 3)
+        e             = fromListBE (macBits !! 4)
+        f             = fromListBE (macBits !! 5)
+        mac           = (NI.MAC a b c d e f)
+        recSequence   = fromListBE sequenceBits :: Sequence

@@ -19,10 +19,12 @@ library
   ghc-options: -Wall -O -threaded
   build-depends:       base          >=4.7 && <5
                      , binary        >= 0.7
+                     , bitwise       >= 0.1.0.0
                      , data-dword    >= 0.3
                      , locators      >= 0.2.4.2
                      , network-info  >= 0.2
                      , safe          >= 0.3
+                     , split         >= 0.2.0
                      , system-fileio >= 0.3
                      , system-filepath
                      , time          >= 1.4.0

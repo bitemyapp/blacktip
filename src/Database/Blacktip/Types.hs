@@ -5,6 +5,7 @@ module Database.Blacktip.Types
        , ArrowOfTimeError(..)
        , NoInterfaceError(..)
        , ParseError(..)
+       , IdentityRecord(..)
        , InterfaceName
        , Milliseconds
        , Sequence
@@ -47,6 +48,11 @@ data ServerState =
 
 -- {64 bit timestamp, 48 bit id (MAC address), 16 bit sequence}
 type UniqueId = Integer
+data IdentityRecord =
+  IdentityRecord { identityTime :: Milliseconds
+                 , identityMac  :: NI.MAC
+                 , identitySequence :: Sequence }
+  deriving (Eq, Ord, Show)
 
 -- if the data in the file doesn't parse
 data ParseError = ParseError deriving Show
