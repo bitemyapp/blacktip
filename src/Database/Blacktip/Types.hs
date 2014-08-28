@@ -1,3 +1,5 @@
+{-# LANGUAGE DeriveGeneric #-}
+
 module Database.Blacktip.Types
        ( Config(..)
        , Interface(..)
@@ -17,6 +19,9 @@ module Database.Blacktip.Types
 import qualified Data.Int                  as DI
 import qualified Filesystem.Path.CurrentOS as FPC
 import qualified Network.Info              as NI
+import Control.DeepSeq
+import Control.DeepSeq.Generics (genericRnf)
+import GHC.Generics
 
 type InterfaceName = String
 
@@ -48,6 +53,7 @@ data ServerState =
 
 -- {64 bit timestamp, 48 bit id (MAC address), 16 bit sequence}
 type UniqueId = Integer
+
 data IdentityRecord =
   IdentityRecord { identityTime :: Milliseconds
                  , identityMac  :: NI.MAC
@@ -62,4 +68,5 @@ data ArrowOfTimeError = ArrowOfTimeError deriving Show
 
 -- We couldn't find an interface by that name, did you change it
 -- from the default IName "eth0" ?
-data NoInterfaceError = NoInterfaceError deriving (Eq, Ord, Show)
+data NoInterfaceError = NoInterfaceError deriving (Eq, Generic, Ord, Show)
+instance NFData NoInterfaceError

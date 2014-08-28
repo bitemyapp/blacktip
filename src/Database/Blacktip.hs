@@ -16,6 +16,7 @@ import qualified Filesystem                as FS
 import qualified Filesystem.Path.CurrentOS as FPC
 import qualified Network.Info              as NI
 import qualified Safe
+import Control.Exception (try)
 import Control.Monad (forever, when)
 import Data.Bits
 import Data.Bits.Bitwise (fromListBE)
@@ -51,8 +52,8 @@ serverState = unsafePerformIO $ MV.newEmptyMVar
 
 readTimestamp :: FPC.FilePath -> IO Int
 readTimestamp path = do
-  result <- FS.readFile path
-  return $ (read . B.unpack) result
+  result <- try $ FS.readFile path :: IO (Either IOError B.ByteString)
+  return $ either (const 0) (read . B.unpack) result
 
 writeTimestamp :: MV.MVar ServerState -> FPC.FilePath -> IO CC.ThreadId
 writeTimestamp s path = do
