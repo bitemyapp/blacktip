@@ -12,9 +12,7 @@ gen :: BT.Config -> IO (Either BT.NoInterfaceError BT.UniqueId)
 gen = BT.generateUniqueId
 
 genMany :: BT.Config -> Int -> IO [Either BT.NoInterfaceError BT.UniqueId]
-genMany config n = do
-  results <- mapConcurrently gen (replicate n config)
-  return results
+genMany config n = mapConcurrently gen (replicate n config)
 
 main :: IO ()
 main = defaultMain
