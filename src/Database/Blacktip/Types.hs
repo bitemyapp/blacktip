@@ -20,7 +20,6 @@ import qualified Data.Int                  as DI
 import qualified Filesystem.Path.CurrentOS as FPC
 import qualified Network.Info              as NI
 import Control.DeepSeq
-import Control.DeepSeq.Generics (genericRnf)
 import GHC.Generics
 
 type InterfaceName = String

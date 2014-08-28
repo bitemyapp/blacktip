@@ -48,7 +48,7 @@ test-suite tests
 benchmark benches
   type:           exitcode-stdio-1.0
   main-is:        benches.hs
-  ghc-options:    -Wall -O -threaded
+  ghc-options:    -Wall -O2 -threaded
   hs-source-dirs: benchmarks
   build-depends:
     base,

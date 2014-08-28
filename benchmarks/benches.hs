@@ -28,12 +28,12 @@ timeJustMultiply = fmap (*1000) PSX.getPOSIXTime
 
 main :: IO ()
 main = defaultMain
-  [ bench "one unique id"                 $ nfIO (gen wc)
-  , bench "sequential 1000 unique ids"    $ nfIO (replicateM 1000 (gen wc))
-  , bench "sequential 100,000 unique ids" $ nfIO (replicateM 100000 (gen wc))
+  [ bench "one unique id"                 $ whnfIO (gen wc)
+  , bench "sequential 1000 unique ids"    $ whnfIO (replicateM 1000 (gen wc))
+  , bench "sequential 100,000 unique ids" $ whnfIO (replicateM 100000 (gen wc))
   -- , bench "concurrent 1000 unique ids"    $ nfIO (genMany wc 1000)
-  , bench "get Unix Millis"    $ nfIO BT.getUnixMillis
+  , bench "get Unix Millis"    $ whnfIO BT.getUnixMillis
   -- , bench "get POSIX time"     $ nfIO PSX.getPOSIXTime
   -- , bench "POSIX time w/ mult" $ nfIO timeJustMultiply
-  , bench "get interface by name" $ nfIO (BT.getInterfaceByName "wlan0")
+  , bench "get interface by name" $ whnfIO (BT.getInterfaceByName "wlan0")
   ]
