@@ -69,4 +69,6 @@ data ArrowOfTimeError = ArrowOfTimeError deriving Show
 -- We couldn't find an interface by that name, did you change it
 -- from the default IName "eth0" ?
 data NoInterfaceError = NoInterfaceError deriving (Eq, Generic, Ord, Show)
+
 instance NFData NoInterfaceError
+instance NFData NI.NetworkInterface

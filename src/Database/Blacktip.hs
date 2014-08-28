@@ -3,6 +3,7 @@ module Database.Blacktip
        , generateUniqueId
        , generateUniqueId'
        , getInterfaceByName
+       , getUnixMillis
        , integerToRecord
        , toBase62
          ) where
