@@ -17,7 +17,7 @@ source-repository head
   location: https://github.com/bitemyapp/blacktip.git
 
 library
-  ghc-options: -Wall -O -threaded
+  ghc-options: -Wall -threaded
   default-extensions:  OverloadedStrings
   build-depends:       base             >=4.7 && <5
                      , bitwise          >= 0.1.0.0
