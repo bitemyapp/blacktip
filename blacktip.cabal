@@ -17,6 +17,7 @@ source-repository head
 
 library
   ghc-options: -Wall -O -threaded
+  default-extensions:  OverloadedStrings
   build-depends:       base             >=4.7 && <5
                      , bitwise          >= 0.1.0.0
                      , locators         >= 0.2.4.2

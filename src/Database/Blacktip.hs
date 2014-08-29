@@ -17,7 +17,7 @@ import qualified Filesystem                as FS
 import qualified Filesystem.Path.CurrentOS as FPC
 import qualified Network.Info              as NI
 import qualified Safe
-import Control.Exception (try)
+import Control.Exception (mask, try)
 import Control.Monad (forever, when)
 import Data.Bits
 import Data.Bits.Bitwise (fromListBE)
@@ -54,14 +54,17 @@ serverState = unsafePerformIO $ MV.newEmptyMVar
 readTimestamp :: FPC.FilePath -> IO Int
 readTimestamp path = do
   result <- try $ FS.readFile path :: IO (Either IOError B.ByteString)
-  return $ either (const 0) (read . B.unpack) result
+  case result of
+   (Right "") -> return 0
+   _          -> return $ either (const 0) (read . B.unpack) result
 
 writeTimestamp :: MV.MVar ServerState -> FPC.FilePath -> IO CC.ThreadId
 writeTimestamp s path = do
   CC.forkIO go
   where go = forever $ do
           ss <- MV.readMVar s
-          FS.writeFile path (B.pack (show (ssTime ss)))
+          mask $ \_ -> do
+            FS.writeFile path (B.pack (show (ssTime ss)))
           -- sleep for 1 second
           CC.threadDelay 1000000
 
@@ -79,9 +82,6 @@ bumpItYo ts s
   | otherwise       = arrowOfTimeError ts stateTime
   where stateTime = ssTime s
         stateSeq  = ssSequence s
-
--- readFile try $ FS.readFile (FPC.decodeString "lol") :: IO (Either IOException ByteString)
--- writeFile config = FPC.writeFile (timestampPath config)
 
 generateUniqueId' :: Config -> IO (Either NoInterfaceError
                                   (UniqueId, IdentityRecord))
