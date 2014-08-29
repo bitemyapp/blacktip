@@ -4,6 +4,21 @@
 
 Blacktip is a k-ordered unique id service and a clone of Boundary's Flake.
 
+## Examples
+
+```haskell
+import Database.Blacktip
+
+wirelessConfig :: Config
+wirelessConfig = defaultConfig { interface = IName "wlan0" }
+
+main = do
+  result <- generateUniqueId wirelessConfig
+  case result of
+    Left  NoInterfaceError -> error    "fack"
+    Right uid              -> putStrLn (show uid)
+```
+
 ## Benchmarks
 
 ### Blacktip
@@ -18,6 +33,12 @@ src/flake_harness.erl:33:<0.75.0>: generating ids: 0.272 s
 ```
 
 ## Exceptional cases / Warnings
+
+### If you care about performance at all...
+
+Don't pass the interface via the `IName` string. Fetch it yourself and put it in the config as an `NIInterface`.
+
+I wrote `getInterfaceByName` for this purpose.
 
 ### This is a singleton service, ONE INSTANCE PER SERVER/MAC ADDRESS
 
