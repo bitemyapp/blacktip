@@ -1,7 +1,8 @@
 name:                blacktip
 version:             0.1.0.0
-synopsis:            Decentralized, k-ordered unique ID generator. Clone of a clone.
-homepage:            bitemyapp.com
+synopsis:            Decentralized, k-ordered unique ID generator.
+description:         Clone of Boundary's Flake unique id service for Haskell, itself based on Snowflake.
+homepage:            https://github.com/bitemyapp/blacktip
 license:             Apache-2.0
 license-file:        LICENSE
 author:              Chris Allen
