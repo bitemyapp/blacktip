@@ -20,7 +20,7 @@ reset:
 	cabal sandbox init
 
 haddock:
-	cabal haddock --hoogle --hyperlink-source --html-location='http://hackage.haskell.org/package/blacktip/docs' --contents-location='http://hackage.haskell.org/package/blacktip'
+	cabal haddock --hoogle --hyperlink-source
 
 # export BTVER=0.1.0.0
 
