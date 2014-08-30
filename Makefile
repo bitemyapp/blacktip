@@ -20,11 +20,10 @@ reset:
 	cabal sandbox init
 
 
-# Generate haddock
-# THIS DOES NOT WORK IN A MAKEFILE!
-# cabal haddock --hyperlink-source --html-location='http://hackage.haskell.org/package/$pkg/docs' --contents-location='http://hackage.haskell.org/package/$pkg'
+haddock:
+	gen-docs.sh
 
-# export BTVER=0.1.0.0
+# export BTVER=0.1.0.1
 
 # upload:
 # 	cabal sdist
