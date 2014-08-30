@@ -19,8 +19,9 @@ reset:
 	rm -rf .cabal-sandbox
 	cabal sandbox init
 
-haddock:
-	cabal haddock --hoogle --hyperlink-source
+
+# Generate haddock
+# cabal haddock --hyperlink-source --html-location='http://hackage.haskell.org/package/$pkg/docs' --contents-location='http://hackage.haskell.org/package/$pkg'
 
 # export BTVER=0.1.0.0
 
