@@ -51,7 +51,7 @@ serverState :: MV.MVar ServerState
 -- emptyMVar when I bind against serverState
 -- Don't complain to me about the unsafePerformIO, I know what I'm doing.
 -- http://www.reddit.com/r/haskell/comments/2jbl78/from_60_frames_per_second_to_500_in_haskell/claf6hg?context=3
-serverState = unsafePerformIO $ MV.newEmptyMVar
+serverState = unsafePerformIO MV.newEmptyMVar
 
 readTimestamp :: FPC.FilePath -> IO Int
 readTimestamp path = do
