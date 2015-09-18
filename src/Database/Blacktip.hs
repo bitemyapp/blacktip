@@ -61,12 +61,10 @@ readTimestamp path = do
    _          -> return $ either (const 0) (read . B.unpack) result
 
 writeTimestamp :: MV.MVar ServerState -> FPC.FilePath -> IO CC.ThreadId
-writeTimestamp s path = do
-  CC.forkIO go
+writeTimestamp s path = CC.forkIO go
   where go = forever $ do
           ss <- MV.readMVar s
-          mask $ \_ -> do
-            FS.writeFile path (B.pack (show (ssTime ss)))
+          mask $ \_ -> FS.writeFile path (B.pack (show (ssTime ss)))
           -- sleep for 1 second
           CC.threadDelay 1000000
 
@@ -95,11 +93,11 @@ generateUniqueId' config = do
   mState <- MV.takeMVar serverState
   let newState = bumpItYo millis mState
   _ <- MV.putMVar serverState newState
-  let sSeq = ssSequence $ newState
+  let sSeq = ssSequence newState
   mMac <- (getMac . interface) config
   case mMac of
    Nothing  -> return $ Left NoInterfaceError
-   Just mac -> return $ Right ((binnify millis mac sSeq), IdentityRecord millis mac sSeq)
+   Just mac -> return $ Right (binnify millis mac sSeq, IdentityRecord millis mac sSeq)
 
 generateUniqueId :: Config -> IO (Either NoInterfaceError UniqueId)
 generateUniqueId config = do
@@ -138,11 +136,11 @@ integerToRecord n = IdentityRecord milliseconds mac recSequence
         macBits       = chunksOf 8 $ take 48 $ drop 64 extractedBits
         sequenceBits  = take 16 $ drop 112 extractedBits
         milliseconds  = fromListBE milliBits :: Milliseconds
-        a             = fromListBE (macBits !! 0)
+        a             = fromListBE (head macBits)
         b             = fromListBE (macBits !! 1)
         c             = fromListBE (macBits !! 2)
         d             = fromListBE (macBits !! 3)
         e             = fromListBE (macBits !! 4)
         f             = fromListBE (macBits !! 5)
-        mac           = (NI.MAC a b c d e f)
+        mac           = NI.MAC a b c d e f
         recSequence   = fromListBE sequenceBits :: Sequence
