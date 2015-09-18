@@ -1,5 +1,3 @@
-{-# LANGUAGE DeriveGeneric #-}
-
 module Database.Blacktip.Types
        ( Config(..)
        , Interface(..)
