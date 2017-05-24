@@ -23,6 +23,7 @@ import Data.Bits
 import Data.Bits.Bitwise (fromListBE)
 import Data.List.Split (chunksOf)
 import Database.Blacktip.Types
+import System.Clock
 import System.IO.Unsafe (unsafePerformIO)
 
 -- There are only supposed to be one of these
@@ -43,6 +44,9 @@ getMac iface = case iface of
 
 getUnixMillis :: IO Milliseconds
 getUnixMillis = fmap (round . (*1000)) PSX.getPOSIXTime
+
+-- getUnixMillisMonotonic :: IO Milliseconds
+-- getUnixMillisMonotonic = fmap (round . (*1000)) PSX.getPOSIXTime
 
 -- We don't want multiple of these running around via inlining
 {-# NOINLINE serverState #-}
