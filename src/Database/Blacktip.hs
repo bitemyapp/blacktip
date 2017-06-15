@@ -23,7 +23,7 @@ import Data.Bits
 import Data.Bits.Bitwise (fromListBE)
 import Data.List.Split (chunksOf)
 import Database.Blacktip.Types
-import System.Clock
+-- import System.Clock
 import System.IO.Unsafe (unsafePerformIO)
 
 -- There are only supposed to be one of these

@@ -1,6 +1,14 @@
+resolver: lts-8.17
+
 packages:
 - '.'
+
 extra-deps:
-- bitwise-0.1.1.1
-- locators-0.2.4.2
-resolver: lts-8.14
+  - bitwise-0.1.1.1
+  - locators-0.2.4.2
+
+flags: {}
+
+extra-package-dbs: []
+
+system-ghc: false

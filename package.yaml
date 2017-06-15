@@ -1,0 +1,67 @@
+name:                blacktip
+version:             0.1.0.1
+synopsis:            Decentralized, k-ordered unique ID generator.
+description:         Clone of Boundary\'s Flake unique id service for Haskell, itself based on Snowflake.
+homepage:            https://github.com/bitemyapp/blacktip
+license:             Apache-2.0
+author:              Chris Allen
+maintainer:          cma@bitemyapp.com
+copyright:           2017, Chris Allen
+category:            Database
+
+default-extensions:
+  - OverloadedStrings
+#   - QuasiQuotes
+#   - TemplateHaskell
+
+dependencies:
+  - base               >= 4.7 && < 5
+  - bitwise            >= 0.1.0.0
+  - bytestring
+  - clock              >= 0.7
+  - deepseq
+  - deepseq-generics >= 0.1.1.0
+  - locators           >= 0.2.4.2
+  - network-info       >= 0.2
+  - safe               >= 0.3
+  - split              >= 0.2.0
+  - system-fileio      >= 0.3
+  - system-filepath
+  - time               >= 1.4.0
+
+library:
+  ghc-options: -Wall -threaded
+  source-dirs: src
+  exposed-modules:
+    - Database.Blacktip
+    - Database.Blacktip.Types
+
+tests:
+  tests:
+    main: tests.hs
+    source-dirs: test
+    ghc-options:
+      - -threaded
+      - -Wall
+      - -rtsopts
+      - -with-rtsopts=-N
+    dependencies:
+      - base
+      - blacktip
+      - hspec
+
+benchmarks:
+  benches:
+    main: benches.hs
+    source-dirs: benchmarks
+    ghc-options:
+      - -Wall
+      - -O
+      - -threaded
+    dependencies:
+      - base
+      - async
+      - blacktip
+      - criterion
+      - network-info
+      - time
