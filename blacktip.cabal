@@ -1,6 +1,8 @@
--- This file has been generated from package.yaml by hpack version 0.17.0.
+-- This file has been generated from package.yaml by hpack version 0.28.2.
 --
 -- see: https://github.com/sol/hpack
+--
+-- hash: 871017841cd9b224014c9544c88bc8b862490f4c094eadc1d526074edc942149
 
 name:                blacktip
 version:             0.1.0.1
@@ -20,19 +22,19 @@ library
   ghc-options: -Wall -threaded
   default-extensions: OverloadedStrings
   build-depends:
-      base               >= 4.7 && < 5
-    , bitwise            >= 0.1.0.0
+      base >=4.7 && <5
+    , bitwise >=0.1.0.0
     , bytestring
-    , clock              >= 0.7
+    , clock >=0.7
     , deepseq
-    , deepseq-generics >= 0.1.1.0
-    , locators           >= 0.2.4.2
-    , network-info       >= 0.2
-    , safe               >= 0.3
-    , split              >= 0.2.0
-    , system-fileio      >= 0.3
+    , deepseq-generics >=0.1.1.0
+    , locators >=0.2.4.2
+    , network-info >=0.2
+    , safe >=0.3
+    , split >=0.2.0
+    , system-fileio >=0.3
     , system-filepath
-    , time               >= 1.4.0
+    , time >=1.4.0
   hs-source-dirs:
       src
   exposed-modules:
@@ -47,52 +49,52 @@ test-suite tests
   default-extensions: OverloadedStrings
   type: exitcode-stdio-1.0
   main-is: tests.hs
+  other-modules:
+      Paths_blacktip
   hs-source-dirs:
       test
   build-depends:
-      base               >= 4.7 && < 5
-    , bitwise            >= 0.1.0.0
-    , bytestring
-    , clock              >= 0.7
-    , deepseq
-    , deepseq-generics >= 0.1.1.0
-    , locators           >= 0.2.4.2
-    , network-info       >= 0.2
-    , safe               >= 0.3
-    , split              >= 0.2.0
-    , system-fileio      >= 0.3
-    , system-filepath
-    , time               >= 1.4.0
-    , base
+      base
+    , bitwise >=0.1.0.0
     , blacktip
+    , bytestring
+    , clock >=0.7
+    , deepseq
+    , deepseq-generics >=0.1.1.0
     , hspec
+    , locators >=0.2.4.2
+    , network-info >=0.2
+    , safe >=0.3
+    , split >=0.2.0
+    , system-fileio >=0.3
+    , system-filepath
+    , time >=1.4.0
   default-language: Haskell2010
 
 benchmark benches
   type: exitcode-stdio-1.0
   main-is: benches.hs
+  other-modules:
+      Paths_blacktip
   ghc-options: -Wall -O -threaded
   hs-source-dirs:
       benchmarks
   default-extensions: OverloadedStrings
   build-depends:
-      base               >= 4.7 && < 5
-    , bitwise            >= 0.1.0.0
-    , bytestring
-    , clock              >= 0.7
-    , deepseq
-    , deepseq-generics >= 0.1.1.0
-    , locators           >= 0.2.4.2
-    , network-info       >= 0.2
-    , safe               >= 0.3
-    , split              >= 0.2.0
-    , system-fileio      >= 0.3
-    , system-filepath
-    , time               >= 1.4.0
+      async
     , base
-    , async
+    , bitwise >=0.1.0.0
     , blacktip
+    , bytestring
+    , clock >=0.7
     , criterion
+    , deepseq
+    , deepseq-generics >=0.1.1.0
+    , locators >=0.2.4.2
     , network-info
+    , safe >=0.3
+    , split >=0.2.0
+    , system-fileio >=0.3
+    , system-filepath
     , time
   default-language: Haskell2010

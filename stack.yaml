@@ -1,11 +1,11 @@
-resolver: lts-8.17
+resolver: lts-11.7
 
 packages:
 - '.'
 
 extra-deps:
-  - bitwise-0.1.1.1
-  - locators-0.2.4.2
+  - bitwise-1.0.0.1
+  - locators-0.2.4.3
 
 flags: {}
 
